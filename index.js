@@ -15,15 +15,13 @@ app.get('/api/tweets', function(request, response){
 			if ( fixtures.tweets[i].userId === userId) {
 				results.push(fixtures.tweets[i]);
 			}
-			responseObj['tweets'] = results;
-			response.statusCode = 200;
 		}
+		responseObj['tweets'] = results;
+		return response.send(responseObj);
 	}else{
-		response.statusCode = 400;
-		responseObj = {};
+		// response.statusCode = 400;
+		return response.sendStatus(400)
 	}
-	response.writeHead(response.statusCode);
-	response.end(responseObj);
 });
 
 var server = app.listen(3000,'127.0.0.1', function(request, response){
