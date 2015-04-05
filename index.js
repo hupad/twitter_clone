@@ -24,6 +24,24 @@ app.get('/api/tweets', function(request, response){
 	}
 });
 
+app.get('/api/users/:userId', function(request, response){
+	
+	var userId = request.params.userId;
+	var data = {};
+	var userFound = false;
+	for (var i = fixtures.users.length - 1; i >= 0; i--) {
+		if (fixtures.users[i].id === userId) {
+			userFound = true;
+			data["user"] = fixtures.users[i];
+		}
+	}
+	if (userFound) {
+		return response.send(data);
+	}else{
+		return response.sendStatus(404);
+	}
+});
+
 var server = app.listen(3000,'127.0.0.1', function(request, response){
 });
 
