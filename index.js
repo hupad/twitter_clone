@@ -2,6 +2,7 @@
 var express = require('express');
 var fixtures = require('./fixtures.js');
 var bodyParser =  require("body-parser");
+var moment = require('moment');
 
 var app = express();
 
@@ -70,6 +71,28 @@ app.post('/api/users', function(request, response){
 		return response.send(data);
 	}
 });
+
+app.post('/api/tweets', function(request, response){
+	var data = { tweet: {} };
+	var max = 0;
+
+	data.tweet.userId = request.body.tweet.userId;
+	data.tweet.text = request.body.tweet.text;
+
+	for (var i = fixtures.tweets.length - 1; i >= 0; i--) {
+		if (fixtures.tweets[i].id > max) {
+			max = fixtures.tweets[i].id;
+		}
+	}
+	
+	data.tweet.id = max + 1;
+	data.tweet.created = moment().unix();
+
+	fixtures.tweets.push(data.tweet);
+
+	return response.send(data);
+
+})
 
 var server = app.listen(3000,'127.0.0.1', function(request, response){
 });
