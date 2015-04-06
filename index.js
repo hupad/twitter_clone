@@ -1,8 +1,11 @@
 
 var express = require('express');
 var fixtures = require('./fixtures.js');
+var bodyParser =  require("body-parser");
 
 var app = express();
+
+app.use(bodyParser.json());
 
 
 app.get('/api/tweets', function(request, response){
@@ -39,6 +42,32 @@ app.get('/api/users/:userId', function(request, response){
 		return response.send(data);
 	}else{
 		return response.sendStatus(404);
+	}
+});
+
+app.post('/api/users', function(request, response){
+
+	var followingIds = [];
+	var data = {user:{}};
+
+	data.user.id = request.body.user.id;
+	data.user.name = request.body.user.name;
+	data.user.email = request.body.user.email;
+	data.user.password = request.body.user.password;
+	data.user.followingIds = followingIds;
+
+	var userExists = false;
+	for (var i = fixtures.users.length - 1; i >= 0; i--) {
+		if (fixtures.users[i].id === data.user.id) {
+			userExists = true;
+		}
+	}
+
+	if (userExists) {
+		return response.sendStatus(409);
+	}else{
+		fixtures.users.push(data.user);
+		return response.send(data);
 	}
 });
 
