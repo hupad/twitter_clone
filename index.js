@@ -94,6 +94,45 @@ app.post('/api/tweets', function(request, response){
 
 })
 
+app.get('/api/tweets/:tweetId', function(request, response){
+	
+	var tweetId = request.params.tweetId;
+	var data = {};
+
+	if (tweetId) {
+		
+		for (var i = fixtures.tweets.length - 1; i >= 0; i--) {
+			
+			if ( tweetId === fixtures.tweets[i].id ) {
+				data['tweet'] = fixtures.tweets[i];
+			}
+		}
+	}
+	if (Object.keys(data).length > 0) {
+		return response.send(data);
+	}else{
+		return response.sendStatus(404);
+	}
+})
+
+app.delete('/api/tweets/:tweetId', function(request, response){
+	var tweetId = request.params.tweetId;
+	var index;
+
+	for (var i = fixtures.tweets.length - 1; i >= 0; i--) {
+		if ( tweetId === fixtures.tweets[i].id ) {
+			index = i;
+		}
+	}
+
+	if (index) {
+		fixtures.tweets.splice(index, 1);
+		return response.sendStatus(200);
+	}else{
+		return response.sendStatus(404);
+	}
+})
+
 var server = app.listen(3000,'127.0.0.1', function(request, response){
 });
 
