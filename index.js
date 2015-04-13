@@ -20,7 +20,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.get('/api/tweets', function(request, response){
-	var userId = request.query.userId;
+	var userId = request.query.userId;;
 	var results = [];
 	var responseObj = {};
 
@@ -33,7 +33,6 @@ app.get('/api/tweets', function(request, response){
 		responseObj['tweets'] = results;
 		return response.send(responseObj);
 	}else{
-		// response.statusCode = 400;
 		return response.sendStatus(400)
 	}
 });
@@ -82,11 +81,11 @@ app.post('/api/users', function(request, response){
 	}
 });
 
-app.post('/api/tweets', function(request, response){
+app.post('/api/tweets', ensureAuthentication, function(request, response){
 	var data = { tweet: {} };
 	var max = 0;
-
-	data.tweet.userId = request.body.tweet.userId;
+	console.log(request.user);
+	data.tweet.id = request.body.tweet.id;
 	data.tweet.text = request.body.tweet.text;
 
 	for (var i = fixtures.tweets.length - 1; i >= 0; i--) {
@@ -95,7 +94,6 @@ app.post('/api/tweets', function(request, response){
 		}
 	}
 	
-	data.tweet.id = max + 1;
 	data.tweet.created = moment().unix();
 
 	fixtures.tweets.push(data.tweet);
@@ -127,7 +125,7 @@ app.get('/api/tweets/:tweetId', function(request, response){
 
 app.delete('/api/tweets/:tweetId', ensureAuthentication, function(request, response){
 	var tweetId = request.params.tweetId;
-	var index;
+	var index = -1;
 
 	for (var i = fixtures.tweets.length - 1; i >= 0; i--) {
 		if ( tweetId === fixtures.tweets[i].id ) {
@@ -135,9 +133,13 @@ app.delete('/api/tweets/:tweetId', ensureAuthentication, function(request, respo
 		}
 	}
 
-	if (index) {
-		fixtures.tweets.splice(index, 1);
-		return response.sendStatus(200);
+	if (index != -1) {
+		if ( request.user.id === fixtures.tweets[index].userId ) {
+			fixtures.tweets.splice(index, 1);
+			return response.sendStatus(200);
+		}else{
+			return response.sendStatus(403);
+		}
 	}else{
 		return response.sendStatus(404);
 	}
@@ -159,9 +161,9 @@ app.post('/api/auth/login', function(request, response, next){
 
 function ensureAuthentication(request, response, next) {
 	if (!request.isAuthenticated()) {
-		return response.sendStatus(403);
+		response.sendStatus(403);
 	}else{
-		return response.sendStatus(200);
+		next();
 	}
 }
 
