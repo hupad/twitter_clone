@@ -24,27 +24,24 @@ passport.deserializeUser(function(id, done){
 
 passport.use(new LocalStrategy(function(username, password, done){
 	
-	var validUser = false;
-	var isValidPassword = false;
+	var user = null;
 
 	for (var i = fixtures.users.length - 1; i >= 0; i--) {
 
 		if ( fixtures.users[i].id == username ) {
-			validUser = true;
-		}else{
-			return done(null, false, { message: 'Incorrect username.' })
-		}
-
-		if ( fixtures.users[i].validPassword(password) ) {
-			isValidPassword = true;
-		}else{
-			done(null, false, { message: 'Incorrect password.' });
-		}
-
-		if (isValidPassword && validUser) {
-			return done( null, fixtures.users[i] );
+			user = fixtures.users[i];
 		}
 	}
+
+	if (!user) {
+		return done(null, false, { message: 'Incorrect username.' });
+	}
+
+	if (user.password !== password) {
+		return done(null, false, { message: 'Incorrect password.' });
+	}
+
+	return done(null, user);
 }));
 
 

@@ -3,11 +3,21 @@ var express = require('express');
 var fixtures = require('./fixtures.js');
 var bodyParser =  require("body-parser");
 var moment = require('moment');
+var session  = require('express-session');
+var passport = require('./auth.js');
 
 var app = express();
 
 app.use(bodyParser.json());
 
+app.use(session({
+	secret: 'keyboard cat',
+	resave: false,
+	saveUninitialized: true
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.get('/api/tweets', function(request, response){
 	var userId = request.query.userId;
@@ -115,7 +125,7 @@ app.get('/api/tweets/:tweetId', function(request, response){
 	}
 })
 
-app.delete('/api/tweets/:tweetId', function(request, response){
+app.delete('/api/tweets/:tweetId', ensureAuthentication, function(request, response){
 	var tweetId = request.params.tweetId;
 	var index;
 
@@ -132,6 +142,28 @@ app.delete('/api/tweets/:tweetId', function(request, response){
 		return response.sendStatus(404);
 	}
 })
+
+app.post('/api/auth/login', function(request, response, next){
+	
+	passport.authenticate('local', function(err, user, info) {
+		var data = {}
+	    if (err) { return next(err); }
+	    if (!user) { return response.sendStatus(403); }
+	    request.logIn(user, function(err) {
+	      if (err) { return next(err); }
+	      	data['user'] = user;
+	      	return response.send(data);
+	    });
+	})(request, response, next);
+})
+
+function ensureAuthentication(request, response, next) {
+	if (!request.isAuthenticated()) {
+		return response.sendStatus(403);
+	}else{
+		return response.sendStatus(200);
+	}
+}
 
 var server = app.listen(3000,'127.0.0.1', function(request, response){
 });
