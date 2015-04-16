@@ -5,6 +5,7 @@ var bodyParser =  require("body-parser");
 var moment = require('moment');
 var session  = require('express-session');
 var passport = require('./auth.js');
+var config = require('./config');
 
 var app = express();
 
@@ -76,16 +77,20 @@ app.post('/api/users', function(request, response){
 	if (userExists) {
 		return response.sendStatus(409);
 	}else{
-		fixtures.users.push(data.user);
-		return response.send(data);
+		request.login(data.user, function(err){
+			if (!err) {
+				fixtures.users.push(data.user);
+				return response.send(data);
+			}
+		});
 	}
 });
 
 app.post('/api/tweets', ensureAuthentication, function(request, response){
 	var data = { tweet: {} };
 	var max = 0;
-	console.log(request.user);
-	data.tweet.id = request.body.tweet.id;
+
+	data.tweet.userId = request.user.id;
 	data.tweet.text = request.body.tweet.text;
 
 	for (var i = fixtures.tweets.length - 1; i >= 0; i--) {
@@ -94,13 +99,14 @@ app.post('/api/tweets', ensureAuthentication, function(request, response){
 		}
 	}
 	
+	data.tweet.id = max + 1;
 	data.tweet.created = moment().unix();
 
 	fixtures.tweets.push(data.tweet);
 
 	return response.send(data);
 
-})
+});
 
 app.get('/api/tweets/:tweetId', function(request, response){
 	
@@ -121,7 +127,7 @@ app.get('/api/tweets/:tweetId', function(request, response){
 	}else{
 		return response.sendStatus(404);
 	}
-})
+});
 
 app.delete('/api/tweets/:tweetId', ensureAuthentication, function(request, response){
 	var tweetId = request.params.tweetId;
@@ -143,7 +149,7 @@ app.delete('/api/tweets/:tweetId', ensureAuthentication, function(request, respo
 	}else{
 		return response.sendStatus(404);
 	}
-})
+});
 
 app.post('/api/auth/login', function(request, response, next){
 	
@@ -157,7 +163,12 @@ app.post('/api/auth/login', function(request, response, next){
 	      	return response.send(data);
 	    });
 	})(request, response, next);
-})
+});
+
+app.post('/api/auth/logout', function(request, response, next){
+	request.logout();
+	response.sendStatus(200);
+});
 
 function ensureAuthentication(request, response, next) {
 	if (!request.isAuthenticated()) {
@@ -167,7 +178,7 @@ function ensureAuthentication(request, response, next) {
 	}
 }
 
-var server = app.listen(3000,'127.0.0.1', function(request, response){
+var server = app.listen(config.get('server:port'), config.get('server:host'), function(request, response){
 });
 
 
