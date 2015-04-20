@@ -6,6 +6,7 @@ var moment = require('moment');
 var session  = require('express-session');
 var passport = require('./auth.js');
 var config = require('./config');
+var conn = require('./db')
 
 var app = express();
 
@@ -67,23 +68,19 @@ app.post('/api/users', function(request, response){
 	data.user.password = request.body.user.password;
 	data.user.followingIds = followingIds;
 
-	var userExists = false;
-	for (var i = fixtures.users.length - 1; i >= 0; i--) {
-		if (fixtures.users[i].id === data.user.id) {
-			userExists = true;
-		}
-	}
-
-	if (userExists) {
-		return response.sendStatus(409);
-	}else{
-		request.login(data.user, function(err){
-			if (!err) {
-				fixtures.users.push(data.user);
-				return response.send(data);
-			}
-		});
-	}
+	User = conn.model('User');
+	var user = new User(
+		{
+			'id': data.user.id, 
+			'email': data.user.email, 
+			'name': data.user.name, 
+			'password': data.user.password, 
+			'followingIds': data.user.followingIds }
+		);
+	user.save(function(err) {
+		if (err) { return response.sendStatus(409) }
+		return response.sendStatus(200);
+	});
 });
 
 app.post('/api/tweets', ensureAuthentication, function(request, response){
