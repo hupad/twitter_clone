@@ -19,14 +19,14 @@ passport.deserializeUser(function(id, done){
 
 passport.use(new LocalStrategy(function(username, password, done){
 	User = conn.model('User');
-
+	console.log("Hiiii");
 	User.findOne({'id': username}, function(err, user) {
 		if (user) {
 			bcrypt.compare(password, user.password, function(err, res) {
 			   if (!res) {
 					return done(null, false, { message: 'Incorrect password.' });
 				}else{
-					return done(null, user.toClient());
+					return done(null, user);
 				} 
 			});
 		}else{
